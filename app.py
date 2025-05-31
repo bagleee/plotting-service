@@ -1,5 +1,6 @@
 import streamlit as st
 import sqlite3
+from werkzeug.security import generate_password_hash, check_password_hash
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -23,13 +24,17 @@ def init_db():
 init_db()
 
 def register_user(username, password):
-    conn = sqlite3.connect(DATABASE)
-    cursor = conn.cursor()
-    cursor.execute("INSERT INTO users (username, password) VALUES (?, ?)", 
-                    (username, password))
-    conn.commit()
-    conn.close()
-    return True
+    password_hash = generate_password_hash(password)
+    try:
+        conn = sqlite3.connect(DATABASE)
+        cursor = conn.cursor()
+        cursor.execute("INSERT INTO users (username, password) VALUES (?, ?)", 
+                     (username, password_hash))
+        conn.commit()
+        conn.close()
+        return True
+    except sqlite3.IntegrityError:
+        return False
 
 def verify_user(username, password):
     conn = sqlite3.connect(DATABASE)
@@ -38,7 +43,7 @@ def verify_user(username, password):
     user_data = cursor.fetchone()
     conn.close()
     
-    if user_data and user_data[2]==password:
+    if user_data and check_password_hash(user_data[2], password):
         return True
     return False
 
