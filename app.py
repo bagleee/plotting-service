@@ -1,5 +1,7 @@
 import streamlit as st
 import sqlite3
+import matplotlib.pyplot as plt
+import numpy as np
 
 # DataBase SetUp
 
@@ -39,6 +41,31 @@ def verify_user(username, password):
     if user_data and user_data[2]==password:
         return True
     return False
+
+def get_user_id(username):
+    conn = sqlite3.connect(DATABASE)
+    cursor = conn.cursor()
+    cursor.execute("SELECT id FROM users WHERE username = ?", (username,))
+    user_id = cursor.fetchone()[0]
+    conn.close()
+    return user_id
+
+
+# Plotting
+
+def plot_function(func_str, x_range=(-10, 10), num_points=1000):
+    try:
+        x = np.linspace(x_range[0], x_range[1], num_points)
+        y = eval(func_str, {'np': np, 'x': x})
+        
+        fig, ax = plt.subplots()
+        ax.plot(x, y)
+        ax.set_title(f"Function: {func_str}")
+        ax.grid(True)
+        st.pyplot(fig)
+    except Exception as e:
+        st.error(f"Plotting error: {e}")
+      
 
 
 # Main block
@@ -82,6 +109,18 @@ def main():
             st.session_state.logged_in = False
             st.session_state.username = None
             st.experimental_rerun()
+            
+        st.title("Function plotter")
+                
+        with st.form("function_form"):
+            func_str = st.text_input("Enter the expression of x (e.g., np.sin(x) or x**2 + 3*x + 2)", "np.sin(x)")
+            x_min = st.number_input("Min x", value=-10.0)
+            x_max = st.number_input("Max x", value=10.0)
+            submit = st.form_submit_button("Make plot")
+            
+            if submit:
+                user_id = get_user_id(st.session_state.username)
+                plot_function(func_str, (x_min, x_max))
 
 if __name__ == '__main__':
     main()
