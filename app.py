@@ -1,11 +1,13 @@
 import streamlit as st
 import sqlite3
+import plotly.graph_objects as go
+import pandas as pd
 from werkzeug.security import generate_password_hash, check_password_hash
 import matplotlib.pyplot as plt
 import numpy as np
+import os
 
 # DataBase SetUp
-
 DATABASE = 'users.db'
 
 def init_db():
@@ -16,6 +18,17 @@ def init_db():
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             username TEXT UNIQUE NOT NULL,
             password TEXT NOT NULL
+        )
+    """)
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS user_plots (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            function TEXT NOT NULL,
+            x_min REAL NOT NULL,
+            x_max REAL NOT NULL,
+            timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(user_id) REFERENCES users(id)
         )
     """)
     conn.commit()
@@ -55,6 +68,26 @@ def get_user_id(username):
     conn.close()
     return user_id
 
+def save_plot_to_history(user_id, func_str, x_range):
+    conn = sqlite3.connect(DATABASE)
+    cursor = conn.cursor()
+    cursor.execute(
+        "INSERT INTO user_plots (user_id, function, x_min, x_max) VALUES (?, ?, ?, ?)",
+        (user_id, func_str, x_range[0], x_range[1])
+    )
+    conn.commit()
+    conn.close()
+
+def get_user_plots(user_id):
+    conn = sqlite3.connect(DATABASE)
+    cursor = conn.cursor()
+    cursor.execute(
+        "SELECT id, function, x_min, x_max, timestamp FROM user_plots WHERE user_id = ? ORDER BY timestamp DESC",
+        (user_id,)
+    )
+    plots = cursor.fetchall()
+    conn.close()
+    return plots
 
 # Plotting
 
@@ -65,17 +98,16 @@ def plot_function(func_str, x_range=(-10, 10), num_points=1000):
         
         fig, ax = plt.subplots()
         ax.plot(x, y)
-        ax.set_title(f"Function: {func_str}")
+        ax.set_title(func_str)
         ax.grid(True)
         st.pyplot(fig)
     except Exception as e:
         st.error(f"Plotting error: {e}")
-      
-
-
+        
 # Main block
 
 def main():
+    st.set_page_config(page_title="Function plotter", layout="wide")
     
     if 'logged_in' not in st.session_state:
         st.session_state.logged_in = False
@@ -114,9 +146,21 @@ def main():
             st.session_state.logged_in = False
             st.session_state.username = None
             st.experimental_rerun()
-            
+        
         st.title("Function plotter")
-                
+        
+        if st.sidebar.checkbox("Display the request history"):
+            user_id = get_user_id(st.session_state.username)
+            plots = get_user_plots(user_id)
+            
+            if plots:
+                st.sidebar.subheader("Request history")
+                for plot in plots:
+                    if st.sidebar.button(f"{plot[1]} [{plot[2]}, {plot[3]}]", key=f"hist_{plot[0]}"):
+                        plot_function(plot[1], (plot[2], plot[3]))
+            else:
+                st.sidebar.write("The request history is empty")
+        
         with st.form("function_form"):
             func_str = st.text_input("Enter the expression of x (e.g., np.sin(x) or x**2 + 3*x + 2)", "np.sin(x)")
             x_min = st.number_input("Min x", value=-10.0)
@@ -125,6 +169,7 @@ def main():
             
             if submit:
                 user_id = get_user_id(st.session_state.username)
+                save_plot_to_history(user_id, func_str, (x_min, x_max))
                 plot_function(func_str, (x_min, x_max))
 
 if __name__ == '__main__':
