@@ -91,16 +91,71 @@ def get_user_plots(user_id):
 
 # Plotting
 
+def simple_to_latex(func_str):
+    replacements = {
+        "sin": r"\sin",
+        "cos": r"\cos",
+        "tan": r"\tan",
+        "exp": r"\exp",
+        "log": r"\log",
+        "sqrt": r"\sqrt",
+        "**": "^",
+        "*": r"\cdot ",
+    }
+    result = func_str
+    for k, v in replacements.items():
+        result = result.replace(k, v)
+    return f"${result}$"
+
 def plot_function(func_str, x_range=(-10, 10), num_points=1000):
     try:
         x = np.linspace(x_range[0], x_range[1], num_points)
-        y = eval(func_str, {'np': np, 'x': x})
+        y = eval(func_str, {
+            'np': np,
+            'x': x,
+            'sin': np.sin,
+            'cos': np.cos,
+            'tan': np.tan,
+            'exp': np.exp,
+            'log': np.log,
+            'sqrt': np.sqrt,
+        })
         
-        fig, ax = plt.subplots()
-        ax.plot(x, y)
-        ax.set_title(func_str)
-        ax.grid(True)
-        st.pyplot(fig)
+        df = pd.DataFrame({'x': x, 'y': y})
+        
+        fig = go.Figure()
+        
+        fig.add_trace(go.Scatter(
+            x=df['x'],
+            y=df['y'],
+            mode='lines',
+            name=func_str,
+            line=dict(width=2)
+        ))
+        
+        fig.update_layout(
+            title=f'{simple_to_latex(func_str)}',
+            xaxis_title='X',
+            yaxis_title='Y',
+            hovermode='x unified',
+            template='plotly_white',
+            margin=dict(l=40, r=40, t=40, b=40),
+            height=600
+        )
+        
+        fig.update_xaxes(
+            rangeslider_visible=True,
+            rangeselector=dict(
+                buttons=list([
+                    dict(count=1, label="1x", step="all", stepmode="backward"),
+                    dict(count=5, label="5x", step="all", stepmode="backward"),
+                    dict(step="all")
+                ])
+            )
+        )
+        
+        st.plotly_chart(fig, use_container_width=True)
+        
     except Exception as e:
         st.error(f"Plotting error: {e}")
         
@@ -162,7 +217,7 @@ def main():
                 st.sidebar.write("The request history is empty")
         
         with st.form("function_form"):
-            func_str = st.text_input("Enter the expression of x (e.g., np.sin(x) or x**2 + 3*x + 2)", "np.sin(x)")
+            func_str = st.text_input("Enter the expression of x (e.g., sin(x) or x**2 + 3*x + 2)", "sin(x)")
             x_min = st.number_input("Min x", value=-10.0)
             x_max = st.number_input("Max x", value=10.0)
             submit = st.form_submit_button("Make plot")
