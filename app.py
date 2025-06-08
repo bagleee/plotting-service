@@ -8,7 +8,7 @@ import numpy as np
 import os
 
 # DataBase SetUp
-DATABASE = 'users.db'
+DATABASE = os.getenv('DATABASE_PATH', 'users.db')
 
 def init_db():
     conn = sqlite3.connect(DATABASE)

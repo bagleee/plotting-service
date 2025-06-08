@@ -4,7 +4,9 @@ WORKDIR /app
 
 COPY requirements.txt .
 
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt && \
+    mkdir -p /app/db_data && \
+    chmod a+w /app/db_data
 
 COPY app.py .
 
