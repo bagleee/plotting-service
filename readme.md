@@ -1,6 +1,6 @@
 # Function Plotter with User Authentication
 
-### General Description  
+## General Description  
 
 This is a web application for plotting mathematical functions, featuring user registration and the ability to save query history. Users can input functions using Python syntax (e.g., `sin(x)` or `x**2 + 3*x + 2`), set the range of values for the $x$-axis, and visualize the results using an interactive graph.  
 
