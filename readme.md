@@ -1,32 +1,33 @@
 # Function Plotter with User Authentication
 
-## Общее описание
+### General Description  
 
-Это веб-приложение для построения графиков математических функций с возможностью регистрации пользователей и сохранения истории запросов. Пользователи могут вводить функции в синтаксисе Python (например, `sin(x)` или `x**2 + 3*x + 2`), задавать диапазон значений по оси $x$ и визуализировать результат с помощью интерактивного графика.
+This is a web application for plotting mathematical functions, featuring user registration and the ability to save query history. Users can input functions using Python syntax (e.g., `sin(x)` or `x**2 + 3*x + 2`), set the range of values for the $x$-axis, and visualize the results using an interactive graph.  
 
-Поддерживаемые элементарные функции:
+Supported elementary functions: 
 `abs, sin, cos, tan, exp, log, sqrt`.
 
-## Техническое описание
+## Technical Description  
 
-Данные пользователей хранятся в базе данных `SQLite`. Пароли хранятся в хешированном виде. Данные истории построения графиков записываются в отдельную таблицу в базе данных.
+User data is stored in an `SQLite` database. Passwords are stored in hashed form. Graph plotting history is recorded in a separate table within the database.  
 
-Веб-интерфейс написан на `Streamlit`. Построение графиков осуществляется при помощи `Plotly`.
+The web interface is built using `Streamlit`. Graphs are rendered using `Plotly`.  
 
-Приложение написано на `Python`. Разворачивается в контейнере `Docker`. Для этого создан отдельный `bash`-скрипт.
+The application is written in `Python` and deployed in a `Docker` container. A dedicated `bash` script is used for this purpose.
 
+### Project Files:  
 
-### Файлы проекта:
-1. **app.py** - основной файл приложения. В нём реализованы система аутентификации пользователей, работа с базой данных SQLite и логика построения графиков.
+1. **app.py** - The main application file. Implements user authentication system, SQLite database operations, and graph plotting logic.  
 
-2. **Dockerfile** - конфигурация для сборки Docker-образа. Устанавливает Python 3.9 и зависимости, настраивает рабочую директорию, открывает порт 8501 для Streamlit.
+2. **Dockerfile** - Configuration for Docker image build. Installs Python 3.9 and dependencies, sets up working directory, exposes port 8501 for Streamlit.  
 
-3. **requirements.txt** - список зависимостей.
+3. **requirements.txt** - List of Python dependencies.  
 
-4. **run.sh** - скрипт для запуска приложения, который собирает Docker-образ, настраивает переменные окружения и запускает контейнер с монтированием директории для БД.
+4. **run.sh** - Application launch script that builds Docker image, configures environment variables and runs container with mounted database directory.  
 
-### Как запустить:
-1. Выполнить команду:
+### How to Run:  
+1. Execute the command:  
    ```bash
    chmod +x run.sh && ./run.sh
-2. Открыть http://localhost:8501 в браузере
+   ```  
+2. Open http://localhost:8501 in your browser
